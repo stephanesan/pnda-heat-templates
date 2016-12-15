@@ -3,6 +3,7 @@
 resource_registry:
   OS::Pnda::cluster: pnda_cluster.yaml
   OS::Pnda::bastion: bastion.yaml
+  OS::Pnda::intruder: intruder.yaml
   OS::Pnda::cm: cm.yaml
   OS::Pnda::dn: dn.yaml
   OS::Pnda::zookeeper: zookeeper.yaml
