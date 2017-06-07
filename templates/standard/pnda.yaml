@@ -39,6 +39,10 @@ parameters:
     type: string
     description: Flavor for the kafka nodes
     default: ec2.m3.xlarge
+  KafkaVaFlavor:
+    type: string
+    description: Flavor for the kafka nodes
+    default: ec2.m3.xlarge
   DatanodeFlavor:
     type: string
     description: Flavor for the data nodes
@@ -74,6 +78,10 @@ parameters:
   KafkaNodes:
     default: '1'
     description: Number of KAFKA nodes
+    type: string
+  KafkaVaNodes:
+    default: '0'
+    description: Number of KAFKA Va nodes
     type: string
   DataNodes:
     default: '4'
@@ -116,6 +124,7 @@ resources:
       image_id: { get_param: image_id }
       EdgeFlavor: { get_param: EdgeFlavor }
       KafkaFlavor: { get_param: KafkaFlavor }
+      KafkaVaFlavor: { get_param: KafkaVaFlavor }
       OpentsdbFlavor: { get_param: OpentsdbFlavor }
       JupyterFlavor: { get_param: JupyterFlavor }
       CMFlavor: { get_param: CMFlavor }
@@ -131,6 +140,7 @@ resources:
       ToolsFlavor: { get_param: ToolsFlavor }
       ZookeeperNodes: { get_param: ZookeeperNodes }
       KafkaNodes: { get_param: KafkaNodes }
+      KafkaVaNodes: { get_param: KafkaVaNodes }
       DataNodes: { get_param: DataNodes }
       OpentsdbNodes: { get_param: OpentsdbNodes }
       DatanodeVolumeSize : { get_param: DatanodeVolumeSize }

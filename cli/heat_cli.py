@@ -87,6 +87,7 @@ def get_args():
     parser.add_argument('-n','--datanodes', type=int, help='How many datanodes for the hadoop cluster')
     parser.add_argument('-o','--opentsdb-nodes', type=int, help='How many Open TSDB nodes for the hadoop cluster')
     parser.add_argument('-k','--kafka-nodes', type=int, help='How many kafka nodes for the databus cluster')
+    parser.add_argument('-ka', '--kafkaVa-nodes', type=int, help='How many Va kafka nodes for the databus cluster')
     parser.add_argument('-z','--zk-nodes', type=int, help='How many zookeeper nodes for the databus cluster')
     parser.add_argument('-f','--flavor', help='PNDA flavor: e.g. "standard"', choices=['pico', 'standard'])
     parser.add_argument('-b','--branch', help='Git branch to use (defaults to master)')
@@ -132,7 +133,7 @@ def process_templates_from_dir(flavor, cname, from_dir, to_dir, vars):
     with open('%s/pnda.yaml' % to_dir, 'w') as outfile:
         yaml.dump(pnda_common, outfile, default_flow_style=False)
 
-def setup_flavor_templates(flavor, cname, is_bare, fs_type, zknodes, kafkanodes, datanodes):
+def setup_flavor_templates(flavor, cname, is_bare, fs_type, zknodes, kafkanodes, kafkaVanodes, datanodes):
 
     resources_dir = '_resources_{}-{}'.format(flavor, cname)
     dest_dir = '{}/{}'.format(os.getcwd(), resources_dir)
@@ -153,7 +154,7 @@ def setup_flavor_templates(flavor, cname, is_bare, fs_type, zknodes, kafkanodes,
      
     hypervisor_count = get_hypervisor_count()
     templateVars['create_zknodes_group'] = 1 if (zknodes > 1 and hypervisor_count >= zknodes) else 0
-    templateVars['create_kafkanodes_group'] = 1 if (kafkanodes > 1 and hypervisor_count >= kafkanodes) else 0
+    templateVars['create_kafkanodes_group'] = 1 if ((kafkanodes+ kafkaVanodes ) >  1 and hypervisor_count >= (kafkaVanodes + kafkanodes)) else 0
     templateVars['create_datanodes_group'] = 1 if (datanodes > 1 and hypervisor_count >= datanodes) else 0
 
     templateVars['package_repository_fs_type'] = fs_type
@@ -191,13 +192,13 @@ def create_cluster(args):
 
     # TODO add bastion/saltmaster endpoints to runfile
     init_runfile(args.pnda_cluster)
-
     to_runfile({'cmdline':sys.argv})
 
     pnda_cluster = args.pnda_cluster
     datanodes = args.datanodes
     tsdbnodes = args.opentsdb_nodes
     kafkanodes = args.kafka_nodes
+    kafkaVanodes = args.kafkaVa_nodes
     zknodes = args.zk_nodes
     branch = args.branch
     flavor = args.flavor
@@ -229,6 +230,9 @@ def create_cluster(args):
         if zknodes == None:
             zknodes = 0
 
+    if kafkaVanodes is None:
+        kafkaVanodes = 0
+ 
     if not os.path.isfile('../deploy'):
         with open('../deploy', 'w') as git_key_file:
             git_key_file.write('If authenticated access to the platform-salt git repository is required then' +
@@ -238,6 +242,7 @@ def create_cluster(args):
 
     stack_params.append('--parameter ZookeeperNodes={}'.format(zknodes))
     stack_params.append('--parameter KafkaNodes={}'.format(kafkanodes))
+    stack_params.append('--parameter KafkaVaNodes={}'.format(kafkaVanodes))
     stack_params.append('--parameter DataNodes={}'.format(datanodes))
     stack_params.append('--parameter OpentsdbNodes={}'.format(tsdbnodes))
     stack_params.append('--parameter PndaFlavor={}'.format(flavor))
@@ -254,7 +259,7 @@ def create_cluster(args):
 
     if command == 'create':
         print CREATE_INFO
-        setup_flavor_templates(flavor, pnda_cluster, is_bare, fs_type, zknodes, kafkanodes, datanodes)
+        setup_flavor_templates(flavor, pnda_cluster, is_bare, fs_type, zknodes, kafkanodes, kafkaVanodes, datanodes)
         cmdline = 'openstack stack create --timeout 120 --wait --template {} --environment {} {}'.format('pnda.yaml',
                                                                                     'pnda_env.yaml',
                                                                                     stack_params_string)
